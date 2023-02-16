@@ -42,6 +42,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "\n")
 		fmt.Fprintf(os.Stderr, "\t\tGenerate a new SSH key on the attached YubiKey.\n")
 		fmt.Fprintf(os.Stderr, "\n")
+		fmt.Fprintf(os.Stderr, "\tyubikey-agent -setup -touch-policy-cached\n")
+		fmt.Fprintf(os.Stderr, "\n")
+		fmt.Fprintf(os.Stderr, "\t\tGenerate a new SSH key on the attached YubiKey with the cached touch policy. (Requires YubiKeys 3.4 or newer).\n")
+		fmt.Fprintf(os.Stderr, "\n")
 		fmt.Fprintf(os.Stderr, "\tyubikey-agent -l PATH\n")
 		fmt.Fprintf(os.Stderr, "\n")
 		fmt.Fprintf(os.Stderr, "\t\tRun the agent, listening on the UNIX socket at PATH.\n")
@@ -51,6 +55,7 @@ func main() {
 	socketPath := flag.String("l", "", "agent: path of the UNIX socket to listen on")
 	resetFlag := flag.Bool("really-delete-all-piv-keys", false, "setup: reset the PIV applet")
 	setupFlag := flag.Bool("setup", false, "setup: configure a new YubiKey")
+	touchPolicyCachedFlag := flag.Bool("touch-policy-cached", false, "setup: configure a new YubiKey with the cached touch policy (requires YubiKeys 3.4 or newer)")
 	flag.Parse()
 
 	if flag.NArg() > 0 {
@@ -64,7 +69,11 @@ func main() {
 		if *resetFlag {
 			runReset(yk)
 		}
-		runSetup(yk)
+		touchPolicy := piv.TouchPolicyAlways
+		if *touchPolicyCachedFlag {
+			touchPolicy = piv.TouchPolicyCached
+		}
+		runSetup(yk, touchPolicy)
 	} else {
 		if *socketPath == "" {
 			flag.Usage()
